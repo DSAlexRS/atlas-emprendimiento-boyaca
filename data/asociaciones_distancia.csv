@@ -1,0 +1,11 @@
+﻿indicador,variable,rho_spearman,p_valor,p_ajustado_bonferroni,magnitud
+Madurez y renovación,madurez_permanencia_observada,0.30251182242636604,0.0006718725001798416,0.006718725001798416,Moderada
+Formalización y gestión,formalizacion_gestion,-0.2854369684890759,0.001373438564862119,0.01373438564862119,Débil
+Escala y capacidades,escala_capacidades,-0.16650006135435672,0.06568159746631749,0.656815974663175,Débil
+Finanzas y redes,finanzas_redes,-0.41398080052854025,1.938639510304301e-06,1.9386395103043012e-05,Moderada
+Densidad empresarial,densidad_emprendedora,0.009145024092670637,0.9200349141763924,1.0,Muy débil
+RUT,pct_rut_si,-0.4416995714932509,3.150882658269437e-07,3.150882658269437e-06,Moderada
+Educación superior de propietarios,pct_propietarios_educacion_superior,-0.347861417926089,8.065846200438127e-05,0.0008065846200438127,Moderada
+Solicitud de crédito,pct_solicito_credito_si,-0.38878157489661835,8.834868060493624e-06,8.834868060493624e-05,Moderada
+Asociación productiva/comercial,pct_asociacion_productores_comerciantes_si,-0.18716213266093612,0.038182605019037,0.38182605019037,Débil
+Valor agregado por habitante,va_2023_por_habitante_millones_cop,-0.24495508116207057,0.006320450593296032,0.06320450593296031,Débil

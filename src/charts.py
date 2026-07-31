@@ -89,7 +89,7 @@ def profile_map(
             "ue_urbanas_visibles_por_1000_hab_total_2023":
                 "Unidades por 1.000 hab.",
             "distancia_lineal_nucleo_urbano_top5_km":
-                "Distancia al nodo (km)",
+                "Distancia al núcleo urbano (km)",
             "perfil_mapa": "Perfil",
         },
     )
@@ -101,7 +101,7 @@ def profile_map(
                 "Perfil: %{fullData.name}<br>"
                 "Unidades visibles: %{customdata[1]}<br>"
                 "Densidad: %{customdata[2]} por 1.000 hab.<br>"
-                "Distancia al nodo: %{customdata[3]} km"
+                "Distancia al núcleo urbano: %{customdata[3]} km"
                 "<extra></extra>"
             )
         )
@@ -323,7 +323,7 @@ def accessibility_scatter(
         },
         labels={
             "distancia_lineal_nucleo_urbano_top5_km":
-                "Distancia al nodo urbano más cercano (km)",
+                "Distancia al núcleo urbano más cercano (km)",
             y_column: y_label,
             "perfil_texto": "Perfil",
             "nodo_mas_cercano": "Nodo aproximado",

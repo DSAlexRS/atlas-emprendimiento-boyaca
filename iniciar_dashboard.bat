@@ -1,7 +1,7 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-title Atlas del tejido emprendedor de Boyaca
+title Atlas de perfiles empresariales de Boyaca
 
 set "PYTHON_EXE=..\.venv\Scripts\python.exe"
 if exist "%PYTHON_EXE%" goto python_ready

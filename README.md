@@ -1,7 +1,7 @@
-# Atlas del tejido emprendedor de Boyacá
+# Atlas de perfiles municipales del tejido empresarial de Boyacá
 
 Micrositio interactivo construido con Streamlit para explorar los perfiles
-municipales del tejido emprendedor urbano visible, su estructura productiva,
+municipales del tejido empresarial urbano visible, su estructura productiva,
 accesibilidad y organización espacial.
 
 La aplicación desplegada es autocontenida: `app.py` utiliza únicamente los

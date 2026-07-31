@@ -55,7 +55,7 @@ PROFILE_FILTER_LABELS = {
 
 
 st.set_page_config(
-    page_title="Atlas del tejido emprendedor de Boyacá",
+    page_title="Atlas del tejido empresarial de Boyacá",
     page_icon="◈",
     layout="wide",
     initial_sidebar_state="auto",
@@ -102,9 +102,16 @@ st.markdown(
     [data-testid="stSidebar"] button[data-variant="pills"] {
         border-color: rgba(255,255,255,.28);
         background: rgba(255,255,255,.07);
+        height: auto;
+        min-height: 2.25rem;
     }
     [data-testid="stSidebar"] button[data-variant="pills"] p {
         color: #eef4f6 !important;
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        line-height: 1.2;
+        text-align: left;
     }
     [data-testid="stSidebar"] button[data-variant="pills"][aria-pressed="true"] {
         background: rgba(255,255,255,.08);
@@ -338,7 +345,7 @@ def render_overview(
 ) -> None:
     page_header(
         "Atlas municipal · referencia económica 2023",
-        "El tejido emprendedor de Boyacá no sigue una sola trayectoria",
+        "El tejido empresarial urbano de Boyacá combina perfiles territoriales diversos",
         "Explore cómo se combinan madurez, formalización, capacidades, redes y "
         "densidad en 123 municipios. Los perfiles son configuraciones comparativas "
         "del tejido urbano visible, no un ranking de emprendimiento.",
@@ -449,8 +456,8 @@ def render_overview(
         st.markdown(
             """
             <div class="insight">
-            La renovación puede coexistir con vulnerabilidad o con articulación
-            financiera; la permanencia puede sostenerse sin igual acumulación de
+            La renovación puede coexistir con brechas de escala o con articulación
+            financiera; la permanencia puede sostenerse con brechas de
             gestión; y la densidad no depende de manera monotónica de la cercanía a
             las grandes ciudades. El valor analítico está en la combinación.
             </div>
@@ -605,7 +612,7 @@ def render_profiles(data: pd.DataFrame) -> None:
         height=380,
     )
     st.markdown(
-        f"**Orientación de política:** {PROFILE_POLICY[selected]}"
+        f"**Posibles líneas de acción:** {PROFILE_POLICY[selected]}"
     )
 
 
@@ -689,7 +696,7 @@ def render_accessibility(
         "Formalización y gestión": "formalizacion_gestion",
         "Madurez y permanencia": "madurez_permanencia_observada",
         "Escala y capacidades": "escala_capacidades",
-        "Densidad emprendedora": "densidad_emprendedora",
+        "Densidad de unidades económicas": "densidad_emprendedora",
         "Unidades con RUT (%)": "pct_rut_si",
         "Propietarios con educación superior (%)":
             "pct_propietarios_educacion_superior",
@@ -768,7 +775,7 @@ def render_accessibility(
         config=PLOT_CONFIG,
     )
 
-    st.markdown("### Candidatos exploratorios a centralidades secundarias")
+    st.markdown("### Municipios alejados con alta densidad empresarial")
     poles = (
         data[data["candidato_polo_secundario"]]
         .sort_values(
@@ -922,7 +929,7 @@ def render_municipality(data: pd.DataFrame) -> None:
     )
     c4, c5 = st.columns(2)
     c4.metric(
-        "Distancia al nodo",
+        "Distancia al núcleo urbano",
         f"{fmt_decimal(row['distancia_lineal_nucleo_urbano_top5_km'])} km",
     )
     c5.metric(
@@ -1190,7 +1197,7 @@ selected_distance = st.session_state.get("distance_filter", DISTANCE_ORDER)
 
 with st.sidebar:
     st.markdown("## ◈ Boyacá emprende")
-    st.caption("Atlas del tejido emprendedor urbano visible")
+    st.caption("Atlas de perfiles municipales del tejido empresarial urbano visible")
     page = st.radio(
         "Explorar",
         [

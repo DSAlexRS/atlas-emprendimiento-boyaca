@@ -2,20 +2,14 @@ from __future__ import annotations
 
 
 PROFILE_ORDER = [
-    "Emergentes vulnerables de baja capacidad",
-    "Emergentes con mayor articulación financiera",
-    "Consolidados, densos y con mayores capacidades",
-    "En transición con capacidades medias y baja densidad",
-    "Tradicionales maduros con rezagos de gestión",
+    "Brechas de escala y gestión",
+    "Renovación y articulación financiera",
+    "Mayores capacidades y densidad",
+    "Capacidades intermedias y baja densidad",
+    "Permanencia con brechas de gestión",
 ]
 
-PROFILE_SHORT = {
-    PROFILE_ORDER[0]: "Emergentes vulnerables",
-    PROFILE_ORDER[1]: "Emergentes articulados",
-    PROFILE_ORDER[2]: "Consolidados",
-    PROFILE_ORDER[3]: "En transición",
-    PROFILE_ORDER[4]: "Tradicionales maduros",
-}
+PROFILE_SHORT = {profile: profile for profile in PROFILE_ORDER}
 
 PROFILE_COLORS = {
     PROFILE_ORDER[0]: "#c55a5a",
@@ -27,44 +21,44 @@ PROFILE_COLORS = {
 
 PROFILE_SUMMARIES = {
     PROFILE_ORDER[0]: (
-        "Tejido con restricciones simultáneas de escala, gestión y densidad. "
+        "Combina restricciones relativas de escala, gestión y densidad. "
         "Predominan las unidades unipersonales y de ingresos bajos. La etiqueta "
-        "describe vulnerabilidad productiva; no equivale a informalidad ni a "
-        "emprendimiento por necesidad."
+        "describe la configuración municipal observada; no equivale a una tasa "
+        "de informalidad ni a emprendimiento por necesidad."
     ),
     PROFILE_ORDER[1]: (
-        "Combina alta renovación con la mayor articulación financiera y "
+        "Combina mayor renovación con la mayor articulación financiera y "
         "asociativa relativa. El acceso o búsqueda de crédito ofrece una base "
         "para consolidarse, aunque persisten restricciones formales y de escala."
     ),
     PROFILE_ORDER[2]: (
-        "Reúne mayor formalización, capacidades, adopción digital y densidad. "
+        "Reúne mayores niveles relativos de formalización, capacidades, adopción digital y densidad. "
         "Es una posición comparativamente favorable dentro de Boyacá, no una "
         "certificación de productividad o escalabilidad de todas sus unidades."
     ),
     PROFILE_ORDER[3]: (
         "Presenta capacidades internas cercanas o ligeramente superiores al "
-        "promedio, pero menor masa empresarial y articulación financiera. El "
-        "reto central es transformar capacidades dispersas en conexiones y mercado."
+        "promedio, pero menor densidad de unidades y articulación financiera. La "
+        "lectura conjunta sugiere oportunidades para fortalecer conexiones y mercado."
     ),
     PROFILE_ORDER[4]: (
         "Concentra mayor permanencia observada y menor renovación, junto con "
-        "rezagos de gestión, escala y finanzas. Muestra que longevidad y "
+        "brechas relativas de gestión, escala y finanzas. Muestra que longevidad y "
         "modernización no son procesos equivalentes."
     ),
 }
 
 PROFILE_POLICY = {
     PROFILE_ORDER[0]: (
-        "Gestión básica, registro, alfabetización financiera y adopción digital, "
+        "Fortalecimiento de gestión básica, registro, alfabetización financiera y adopción digital, "
         "con mecanismos móviles o supramunicipales donde la accesibilidad sea baja."
     ),
     PROFILE_ORDER[1]: (
-        "Calidad del financiamiento, conexión comercial y fortalecimiento de redes "
+        "Mejora de la calidad del financiamiento, conexión comercial y fortalecimiento de redes "
         "para traducir renovación y articulación en consolidación."
     ),
     PROFILE_ORDER[2]: (
-        "Innovación, sofisticación de servicios, encadenamientos, mercados "
+        "Innovación, sofisticación de servicios, encadenamientos y acceso a mercados "
         "extralocales y difusión de capacidades hacia el entorno."
     ),
     PROFILE_ORDER[3]: (
@@ -82,7 +76,7 @@ DOMAIN_COLUMNS = {
     "Formalización y gestión": "formalizacion_gestion",
     "Escala y capacidades": "escala_capacidades",
     "Finanzas y redes": "finanzas_redes",
-    "Densidad emprendedora": "densidad_emprendedora",
+    "Densidad de unidades económicas": "densidad_emprendedora",
 }
 
 INDICATOR_COLUMNS = {
@@ -212,7 +206,7 @@ DOMAIN_EXPLANATIONS = {
         "Resume solicitud de crédito y pertenencia a asociaciones. No mide monto "
         "ni calidad del financiamiento."
     ),
-    "Densidad emprendedora": (
+    "Densidad de unidades económicas": (
         "Unidades económicas urbanas visibles por cada mil habitantes; controla "
         "parcialmente el tamaño municipal."
     ),

@@ -14,7 +14,7 @@ from streamlit.testing.v1 import AppTest
 PAGES = [
     "Panorama territorial",
     "Perfiles municipales",
-    "Accesibilidad y espacio",
+    "Accesibilidad territorial",
     "Ficha municipal",
     "Método y alcance",
 ]

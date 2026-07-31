@@ -22,9 +22,16 @@ URL terminada en `streamlit.app`.
 ## Actualizaciones
 
 Los cambios enviados a la rama conectada se reflejan en la aplicación. Si se
-modifican los análisis, reconstruya primero `data/` con
-`scripts/build_dashboard_data.py` desde el proyecto de investigación y luego
-actualice el repositorio público.
+modifican los análisis, desde la raíz del proyecto de investigación:
+
+1. reconstruya `data/processed/base_municipal_emprendimiento_boyaca.csv`;
+2. reconstruya `dashboard_streamlit/data/` con
+   `dashboard_streamlit/scripts/build_dashboard_data.py`;
+3. valide con `dashboard_streamlit/tests/smoke_test.py`;
+4. envíe los cambios del subproyecto al repositorio público.
+
+El constructor no se ejecuta en Streamlit Community Cloud: la aplicación
+publicada ya contiene el extracto agregado necesario.
 
 ## Datos y privacidad
 

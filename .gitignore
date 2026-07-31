@@ -4,5 +4,6 @@ __pycache__/
 .streamlit/secrets.toml
 .pytest_cache/
 tests/.tmp/
+tmp_streamlit_*.log
 .DS_Store
 Thumbs.db

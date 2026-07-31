@@ -12,11 +12,11 @@ DASHBOARD = Path(__file__).resolve().parents[1]
 PROJECT = DASHBOARD.parent
 OUTPUT = DASHBOARD / "data"
 
-BASE = (
+PROCESSED = (
     PROJECT
     / "data"
-    / "intermediate"
-    / "base_intermedia_emprendimiento_boyaca.csv"
+    / "processed"
+    / "base_municipal_emprendimiento_boyaca.csv"
 )
 CLUSTER_DIR = PROJECT / "outputs" / "clustering_municipal"
 GEO = PROJECT / "data" / "raw" / "DANE_MGN2024_municipios_boyaca.geojson"
@@ -26,12 +26,6 @@ def exterior_rings(geometry: dict) -> list[list[list[float]]]:
     if geometry["type"] == "Polygon":
         return [geometry["coordinates"][0]]
     return [polygon[0] for polygon in geometry["coordinates"]]
-
-
-def approximate_center(geometry: dict) -> tuple[float, float]:
-    ring = max(exterior_rings(geometry), key=len)
-    coordinates = np.asarray(ring, dtype=float)
-    return float(coordinates[:, 0].mean()), float(coordinates[:, 1].mean())
 
 
 def simplify_open_line(points: np.ndarray, tolerance: float) -> np.ndarray:
@@ -122,121 +116,32 @@ def simplify_geometry(geometry: dict) -> dict:
     return {"type": geometry["type"], "coordinates": coordinates}
 
 
-def haversine_km(
-    lat1: float,
-    lon1: float,
-    lat2: np.ndarray,
-    lon2: np.ndarray,
-) -> np.ndarray:
-    radius = 6371.0088
-    lat1, lon1 = np.radians([lat1, lon1])
-    lat2 = np.radians(lat2)
-    lon2 = np.radians(lon2)
-    dlat = lat2 - lat1
-    dlon = lon2 - lon1
-    a = (
-        np.sin(dlat / 2) ** 2
-        + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2) ** 2
-    )
-    return 2 * radius * np.arcsin(np.sqrt(a))
-
-
 def main() -> None:
     OUTPUT.mkdir(parents=True, exist_ok=True)
 
-    base = pd.read_csv(
-        BASE,
+    if not PROCESSED.exists():
+        raise FileNotFoundError(
+            "No existe la base final procesada. Desde la raíz de la "
+            "investigación ejecute primero "
+            "scripts/build_processed_municipal_dataset.py."
+        )
+    data = pd.read_csv(
+        PROCESSED,
         dtype={"codigo_municipio": str, "codigo_departamento": str},
-    )
-    clusters = pd.read_csv(
-        CLUSTER_DIR / "clusters_municipales_boyaca.csv",
-        dtype={"codigo_municipio": str},
-    )
-    scores = pd.read_csv(
-        CLUSTER_DIR / "puntajes_municipales_dominios.csv",
-        dtype={"codigo_municipio": str},
-    )
-    poles = pd.read_csv(
-        CLUSTER_DIR / "polos_secundarios_exploratorios.csv",
-        dtype={"codigo_municipio": str},
-    )
-
-    digital_columns = [
-        "pct_reporta_billetera_digital_si",
-        "pct_reporta_pago_tarjeta_si",
-        "pct_reporta_pago_qr_si",
-        "pct_reporta_transferencia_ach_si",
-    ]
-    base["promedio_reporte_medios_digitales"] = base[
-        digital_columns
-    ].mean(axis=1)
-
-    data = (
-        base.merge(
-            clusters,
-            on=["codigo_municipio", "municipio"],
-            how="inner",
-            validate="one_to_one",
-        )
-        .merge(
-            scores,
-            on=["codigo_municipio", "municipio"],
-            how="inner",
-            validate="one_to_one",
-        )
     )
 
     geo = json.loads(GEO.read_text(encoding="utf-8"))
-    feature_by_code = {
-        feature["properties"]["MPIO_CDPMP"]: feature
-        for feature in geo["features"]
-    }
-    centers = {
-        code: approximate_center(feature["geometry"])
-        for code, feature in feature_by_code.items()
-    }
-
-    nodes = data.nlargest(5, "poblacion_cabecera_2023")[
-        ["codigo_municipio", "municipio", "poblacion_cabecera_2023"]
-    ].copy()
-    nodes["longitude"] = nodes["codigo_municipio"].map(
-        lambda code: centers[code][0]
-    )
-    nodes["latitude"] = nodes["codigo_municipio"].map(
-        lambda code: centers[code][1]
-    )
-
-    nearest_nodes = []
-    for row in data.itertuples(index=False):
-        longitude, latitude = centers[row.codigo_municipio]
-        distances = haversine_km(
-            latitude,
-            longitude,
-            nodes["latitude"].to_numpy(),
-            nodes["longitude"].to_numpy(),
-        )
-        nearest_nodes.append(nodes.iloc[int(np.argmin(distances))]["municipio"])
-    data["nodo_mas_cercano"] = nearest_nodes
-    data["tramo_distancia"] = pd.qcut(
-        data["distancia_lineal_nucleo_urbano_top5_km"],
-        q=5,
-        labels=[
-            "Muy próximo",
-            "Próximo",
-            "Intermedio",
-            "Lejano",
-            "Muy lejano",
-        ],
-    ).astype(str)
-    data["candidato_polo_secundario"] = data["codigo_municipio"].isin(
-        set(poles["codigo_municipio"])
-    )
 
     selected_columns = [
         "codigo_municipio",
         "municipio",
         "n_unidades_economicas_urbanas",
         "flag_universo_analitico_menor_30",
+        "n_universo_caracterizacion",
+        "n_universo_sociodemografico_educacion",
+        "n_universo_sociodemografico_trabajadores",
+        "n_universo_sectorial_ingresos_2023",
+        "n_universo_territorial_credito_2023",
         "poblacion_total_2023",
         "poblacion_cabecera_2023",
         "pct_poblacion_cabecera_2023",
@@ -264,14 +169,34 @@ def main() -> None:
         "pct_operacion_menos_3_anios",
         "pct_operacion_mas_10_anios",
         "pct_persona_natural",
+        "pct_registro_camara_comercio_si",
         "pct_rut_si",
         "pct_no_lleva_registros_contables",
+        "pct_estados_financieros",
+        "pct_gestion_contable_formal",
         "pct_ue_un_solo_trabajador_sociodemografico",
         "pct_ue_ingresos_hasta_10m_2023",
+        "pct_activos_fijos_mayores_50m_2023",
+        "pct_remuneracion_mayor_10m_2023",
         "pct_propietarios_educacion_superior",
+        "pct_propietarias_mujeres",
+        "pct_propietarios_menores_35",
         "promedio_reporte_medios_digitales",
         "pct_solicito_credito_si",
+        "pct_obtuvo_credito_entre_solicitantes",
+        "pct_fuente_credito_formal_entre_fuentes_reportadas",
         "pct_asociacion_productores_comerciantes_si",
+        "pct_cooperativa_si",
+        "pct_ica_si_entre_respuestas_validas",
+        "pct_iva_si_entre_respuestas_validas",
+        "pct_renta_si_entre_respuestas_validas",
+        "pct_ue_vivienda_actividad_visible",
+        "pct_ue_emplazamiento_movil_semifijo",
+        "n_gestion_contable",
+        "n_activos_fijos",
+        "n_remuneracion",
+        "n_iva_valido",
+        "n_renta_valido",
         "pct_ciiu_primario_extractivo_sectorial_2023",
         "pct_ciiu_manufactura_sectorial_2023",
         "pct_ciiu_infraestructura_logistica_sectorial_2023",

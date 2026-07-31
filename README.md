@@ -4,9 +4,11 @@ Micrositio interactivo construido con Streamlit para explorar los perfiles
 municipales del tejido emprendedor urbano visible, su estructura productiva,
 accesibilidad y organización espacial.
 
-El subproyecto es autocontenido: `app.py` utiliza únicamente los archivos
-incluidos en `data/`. Puede ejecutarse dentro del proyecto de investigación o
-publicarse como un repositorio independiente.
+La aplicación desplegada es autocontenida: `app.py` utiliza únicamente los
+archivos incluidos en `data/`. Puede ejecutarse dentro del proyecto de
+investigación o publicarse como un repositorio independiente. El script de
+reconstrucción es una herramienta de mantenimiento y se ejecuta desde el
+proyecto analítico completo.
 
 ## Abrir localmente
 
@@ -33,10 +35,11 @@ python -m streamlit run app.py
   desde la barra lateral; los municipios excluidos permanecen en gris.
 - **Perfiles municipales:** centroides, indicadores observables, municipios y
   orientaciones de política.
-- **Accesibilidad y espacio:** gradientes de distancia, candidatos a
+- **Accesibilidad territorial:** gradientes de distancia, candidatos a
   centralidades secundarias y dependencia espacial.
 - **Ficha municipal:** comparación de cada municipio con el promedio de su
-  perfil y su estructura productiva.
+  perfil y Boyacá; cuatro bloques de gestión, escala, financiación, inclusión,
+  localización y tributos; estructura productiva y universos estadísticos.
 - **Método y alcance:** fuentes, dimensiones, límites interpretativos y descarga
   de la base pública.
 
@@ -65,8 +68,17 @@ Desde la raíz del proyecto de investigación:
 .\.venv\Scripts\python.exe dashboard_streamlit\scripts\build_dashboard_data.py
 ```
 
-La rutina reconstruye la base pública a partir de la base intermedia y de las
-salidas validadas de los notebooks.
+Primero deben estar ejecutados los notebooks, incluido
+`04_auditoria_ampliacion_variables.ipynb`, y debe existir el producto municipal
+final:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\build_processed_municipal_dataset.py
+```
+
+La rutina del tablero selecciona las columnas públicas desde
+`data/processed/base_municipal_emprendimiento_boyaca.csv`, copia los resúmenes
+espaciales necesarios y simplifica la geometría para publicación.
 
 Después de reconstruir los datos, reinicie el tablero para vaciar la caché
 cartográfica.

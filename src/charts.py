@@ -17,6 +17,9 @@ from .content import (
 
 PLOT_CONFIG = {
     "displaylogo": False,
+    "displayModeBar": True,
+    "responsive": True,
+    "scrollZoom": True,
     "modeBarButtonsToRemove": ["lasso2d", "select2d"],
 }
 
@@ -122,7 +125,7 @@ def profile_map(
             x=0,
             font=dict(size=11),
         ),
-        height=570,
+        height=640,
     )
     return fig
 
@@ -194,7 +197,7 @@ def distance_map(
             x=0,
             font=dict(size=11),
         ),
-        height=570,
+        height=640,
     )
     return fig
 
@@ -396,7 +399,7 @@ def sector_bar(row: pd.Series) -> go.Figure:
         showlegend=False,
         margin=dict(l=0, r=25, t=10, b=0),
         height=390,
-        xaxis_title="Participación en las unidades clasificadas por CIIU (%)",
+        xaxis_title="Participación CIIU (%)",
         yaxis_title=None,
     )
     return fig

@@ -102,6 +102,70 @@ INDICATOR_COLUMNS = {
         "pct_asociacion_productores_comerciantes_si",
 }
 
+MUNICIPALITY_INDICATOR_GROUPS = {
+    "Trayectoria y gestión": {
+        "Unidades con menos de 3 años (%)": "pct_operacion_menos_3_anios",
+        "Unidades con más de 10 años (%)": "pct_operacion_mas_10_anios",
+        "Persona natural (%)": "pct_persona_natural",
+        "Registro en Cámara de Comercio (%)":
+            "pct_registro_camara_comercio_si",
+        "RUT (%)": "pct_rut_si",
+        "Gestión contable formal (%)": "pct_gestion_contable_formal",
+        "Sin registros contables (%)": "pct_no_lleva_registros_contables",
+    },
+    "Escala y capacidades": {
+        "Unidades de una persona (%)":
+            "pct_ue_un_solo_trabajador_sociodemografico",
+        "Ingresos hasta $10 millones (%)": "pct_ue_ingresos_hasta_10m_2023",
+        "Activos fijos mayores a $50 millones (%)":
+            "pct_activos_fijos_mayores_50m_2023",
+        "Remuneración mayor a $10 millones (%)":
+            "pct_remuneracion_mayor_10m_2023",
+        "Propietarios con educación superior (%)":
+            "pct_propietarios_educacion_superior",
+        "Reporte medio de pagos digitales (%)":
+            "promedio_reporte_medios_digitales",
+    },
+    "Financiación y redes": {
+        "Solicitó crédito (%)": "pct_solicito_credito_si",
+        "Obtuvo crédito entre solicitantes (%)":
+            "pct_obtuvo_credito_entre_solicitantes",
+        "Fuente formal entre fuentes reportadas (%)":
+            "pct_fuente_credito_formal_entre_fuentes_reportadas",
+        "Pertenece a asociación (%)":
+            "pct_asociacion_productores_comerciantes_si",
+        "Pertenece a cooperativa (%)": "pct_cooperativa_si",
+    },
+    "Inclusión, localización y tributos": {
+        "Propietarias mujeres (%)": "pct_propietarias_mujeres",
+        "Propietarios menores de 35 años (%)":
+            "pct_propietarios_menores_35",
+        "Vivienda con actividad visible (%)":
+            "pct_ue_vivienda_actividad_visible",
+        "Emplazamiento móvil o semifijo (%)":
+            "pct_ue_emplazamiento_movil_semifijo",
+        "Declaró o pagó ICA entre respuestas válidas (%)":
+            "pct_ica_si_entre_respuestas_validas",
+        "Declaró o pagó IVA entre respuestas válidas (%)":
+            "pct_iva_si_entre_respuestas_validas",
+        "Declaró o pagó renta entre respuestas válidas (%)":
+            "pct_renta_si_entre_respuestas_validas",
+    },
+}
+
+MUNICIPALITY_UNIVERSES = {
+    "Caracterización general": "n_universo_caracterizacion",
+    "Educación de propietarios": "n_universo_sociodemografico_educacion",
+    "Número de trabajadores": "n_universo_sociodemografico_trabajadores",
+    "Ingresos de 2023": "n_universo_sectorial_ingresos_2023",
+    "Crédito": "n_universo_territorial_credito_2023",
+    "Gestión contable": "n_gestion_contable",
+    "Activos fijos": "n_activos_fijos",
+    "Remuneración": "n_remuneracion",
+    "IVA (respuestas válidas)": "n_iva_valido",
+    "Renta (respuestas válidas)": "n_renta_valido",
+}
+
 SECTOR_COLUMNS = {
     "Primario y extractivo": "pct_ciiu_primario_extractivo_sectorial_2023",
     "Manufactura": "pct_ciiu_manufactura_sectorial_2023",
@@ -153,4 +217,3 @@ DOMAIN_EXPLANATIONS = {
         "parcialmente el tamaño municipal."
     ),
 }
-

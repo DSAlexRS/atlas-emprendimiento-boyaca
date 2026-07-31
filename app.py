@@ -26,6 +26,8 @@ from src.content import (
     DOMAIN_COLUMNS,
     DOMAIN_EXPLANATIONS,
     INDICATOR_COLUMNS,
+    MUNICIPALITY_INDICATOR_GROUPS,
+    MUNICIPALITY_UNIVERSES,
     PROFILE_COLORS,
     PROFILE_ORDER,
     PROFILE_POLICY,
@@ -243,6 +245,42 @@ st.markdown(
         font-size: .82rem;
     }
     h2, h3 { color: var(--ink); letter-spacing: -.015em; }
+    @media (max-width: 760px) {
+        .block-container {
+            padding: .7rem .8rem 3rem;
+        }
+        .hero {
+            padding: .95rem 1rem .9rem;
+            margin-bottom: .85rem;
+        }
+        .hero h1 {
+            font-size: clamp(1.55rem, 8vw, 2.05rem);
+            line-height: 1.08;
+        }
+        .hero p {
+            font-size: .91rem;
+        }
+        .filter-summary {
+            display: block;
+            padding: .7rem .8rem;
+        }
+        .filter-summary span {
+            display: block;
+        }
+        .filter-summary span + span {
+            margin-top: .35rem;
+        }
+        .method-box,
+        .profile-card {
+            min-height: auto;
+        }
+        [data-testid="stMetric"] {
+            padding: .72rem .82rem;
+        }
+        [data-testid="stSidebar"] {
+            width: min(86vw, 330px);
+        }
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -251,7 +289,18 @@ st.markdown(
 
 @st.cache_data(show_spinner=False)
 def profile_means(data: pd.DataFrame) -> pd.DataFrame:
-    numeric = list(DOMAIN_COLUMNS.values()) + list(INDICATOR_COLUMNS.values())
+    municipal_indicators = [
+        column
+        for group in MUNICIPALITY_INDICATOR_GROUPS.values()
+        for column in group.values()
+    ]
+    numeric = list(
+        dict.fromkeys(
+            list(DOMAIN_COLUMNS.values())
+            + list(INDICATOR_COLUMNS.values())
+            + municipal_indicators
+        )
+    )
     return (
         data.assign(perfil_texto=data["perfil"].astype(str))
         .groupby("perfil_texto", observed=True)[numeric]
@@ -276,6 +325,10 @@ def page_header(kicker: str, title: str, text: str) -> None:
 def reset_sidebar_filters() -> None:
     st.session_state["profile_filter"] = PROFILE_ORDER
     st.session_state["distance_filter"] = DISTANCE_ORDER
+
+
+def reset_map_view(state_key: str) -> None:
+    st.session_state[state_key] = st.session_state.get(state_key, 0) + 1
 
 
 def render_overview(
@@ -321,7 +374,18 @@ def render_overview(
     )
     c4.metric("Perfiles presentes", fmt_integer(filtered["perfil"].nunique()))
 
-    st.markdown("### Geografía de los perfiles")
+    map_title, map_action = st.columns([4.2, 1])
+    with map_title:
+        st.markdown("### Geografía de los perfiles")
+    with map_action:
+        st.button(
+            "↺ Vista completa",
+            key="reset_profile_map",
+            on_click=reset_map_view,
+            args=("profile_map_revision",),
+            width="stretch",
+            help="Recupera la silueta completa de Boyacá después de acercar o mover el mapa.",
+        )
     if filtered.empty:
         st.warning("Los filtros actuales no dejan municipios para visualizar.")
         return
@@ -329,11 +393,12 @@ def render_overview(
         profile_map(filtered, geojson, data),
         width="stretch",
         config=PLOT_CONFIG,
+        key=f"profile_map_{st.session_state.get('profile_map_revision', 0)}",
     )
     st.caption(
-        "Los perfiles se construyen por semejanza empresarial y pueden reaparecer "
-        "en lugares no contiguos. Use el zoom, arrastre el mapa y pase el cursor "
-        "sobre un municipio para ver su ficha breve."
+        "Al acercar, el mapa muestra solo el área contenida en el lienzo: no se "
+        "pierden municipios. Arrastre para recorrerlo, use pantalla completa para "
+        "más espacio o pulse «Vista completa» para recuperar todo Boyacá."
     )
     with st.expander(
         f"Ver los {len(filtered)} municipios de la selección",
@@ -476,25 +541,36 @@ def render_profiles(data: pd.DataFrame) -> None:
         indicator_table = pd.DataFrame(
             {
                 "Indicador": list(INDICATOR_COLUMNS),
-                "Promedio del perfil (%)": [
+                "Perfil": [
                     selected_means[column]
                     for column in INDICATOR_COLUMNS.values()
                 ],
-                "Promedio departamental (%)": [
+                "Boyacá": [
                     data[column].mean() for column in INDICATOR_COLUMNS.values()
                 ],
             }
         )
         st.dataframe(
-            indicator_table.style.format(
-                {
-                    "Promedio del perfil (%)": "{:.1f}",
-                    "Promedio departamental (%)": "{:.1f}",
-                }
-            ),
+            indicator_table,
             hide_index=True,
             width="stretch",
             height=420,
+            column_config={
+                "Indicador": st.column_config.TextColumn(
+                    "Indicador",
+                    width="medium",
+                ),
+                "Perfil": st.column_config.NumberColumn(
+                    "Perfil (%)",
+                    width="small",
+                    format="%.1f",
+                ),
+                "Boyacá": st.column_config.NumberColumn(
+                    "Boyacá (%)",
+                    width="small",
+                    format="%.1f",
+                ),
+            },
         )
 
     st.markdown("#### Municipios pertenecientes al perfil")
@@ -554,11 +630,54 @@ def render_accessibility(
         )
         return
 
-    st.markdown("### Gradiente territorial")
+    st.markdown("### Tres preguntas para leer esta sección")
+    reading_columns = st.columns(3)
+    reading_cards = [
+        (
+            "1. ¿Qué tan lejos está?",
+            "La distancia aproxima la accesibilidad al núcleo urbano grande más "
+            "cercano. No representa tiempo de viaje ni calidad vial.",
+        ),
+        (
+            "2. ¿Qué cambia con la distancia?",
+            "Las correlaciones muestran si una capacidad tiende a aumentar o "
+            "disminuir al alejarse. Describen asociación, no causalidad.",
+        ),
+        (
+            "3. ¿Aparecen polos propios?",
+            "Un municipio lejano y denso puede funcionar como centralidad local, "
+            "pero confirmarlo requiere flujos de empleo, comercio y movilidad.",
+        ),
+    ]
+    for column, (title, text) in zip(reading_columns, reading_cards):
+        with column:
+            st.markdown(
+                f"""
+                <div class="method-box">
+                    <strong>{title}</strong>
+                    <p>{text}</p>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+    map_title, map_action = st.columns([4.2, 1])
+    with map_title:
+        st.markdown("### Gradiente territorial")
+    with map_action:
+        st.button(
+            "↺ Vista completa",
+            key="reset_distance_map",
+            on_click=reset_map_view,
+            args=("distance_map_revision",),
+            width="stretch",
+            help="Recupera la silueta completa de Boyacá después de acercar o mover el mapa.",
+        )
     st.plotly_chart(
         distance_map(filtered, geojson, data),
         width="stretch",
         config=PLOT_CONFIG,
+        key=f"distance_map_{st.session_state.get('distance_map_revision', 0)}",
     )
     st.caption(
         "La distancia es geodésica al más cercano de los cinco núcleos con mayor "
@@ -596,16 +715,40 @@ def render_accessibility(
         ]
         if not match.empty:
             row = match.iloc[0]
-            st.metric("Spearman rho", fmt_decimal(row["rho_spearman"], 3))
+            rho = float(row["rho_spearman"])
+            direction = (
+                "tiende a disminuir con la distancia"
+                if rho < -0.10
+                else "tiende a aumentar con la distancia"
+                if rho > 0.10
+                else "no muestra un gradiente claro"
+            )
             st.metric(
-                "p ajustado",
-                "< 0,001"
-                if row["p_ajustado_bonferroni"] < 0.001
-                else fmt_decimal(row["p_ajustado_bonferroni"], 3),
+                "Relación con la distancia (ρ)",
+                fmt_decimal(rho, 3),
+                help=(
+                    "ρ de Spearman varía entre -1 y 1. El signo indica la dirección "
+                    "y el valor absoluto, la intensidad de la asociación monotónica."
+                ),
             )
             st.markdown(
-                f"**Magnitud descriptiva:** {row['magnitud'].lower()}."
+                f"**Lectura:** relación {row['magnitud'].lower()}; el indicador "
+                f"{direction}."
             )
+            with st.expander("Ver detalle estadístico"):
+                p_value = (
+                    "< 0,001"
+                    if row["p_ajustado_bonferroni"] < 0.001
+                    else fmt_decimal(row["p_ajustado_bonferroni"], 3)
+                )
+                st.markdown(
+                    f"**ρ de Spearman:** {fmt_decimal(rho, 3)}  \n"
+                    f"**p ajustado por comparaciones múltiples:** {p_value}"
+                )
+                st.caption(
+                    "El ajuste reduce el riesgo de declarar asociaciones por azar "
+                    "cuando se examinan varios indicadores."
+                )
         else:
             st.info(
                 "Este indicador se muestra para exploración; no forma parte de "
@@ -672,14 +815,19 @@ def render_accessibility(
         "Confirmar una centralidad exige flujos de empleo, comercio, servicios y movilidad."
     )
 
-    st.markdown("### Dependencia espacial y continuidad")
+    st.markdown("### ¿Los municipios parecidos tienden a estar cerca?")
     moran = load_moran()
     spatial = load_spatial_summary().set_index("indicador")["valor"]
     c1, c2, c3 = st.columns(3)
     c1.metric(
-        "Mayor Moran global",
+        "Mayor concentración espacial",
         fmt_decimal(moran["I_Moran"].max(), 3),
         "Formalización y gestión",
+        help=(
+            "Corresponde al mayor I de Moran entre las dimensiones. Valores "
+            "positivos indican que municipios con resultados parecidos tienden a "
+            "ubicarse cerca."
+        ),
     )
     c2.metric(
         "Fronteras del mismo perfil",
@@ -687,9 +835,14 @@ def render_accessibility(
         "20,7% esperado",
     )
     c3.metric(
-        "Coincidencia con regiones contiguas",
+        "Coincidencia con regiones continuas",
         fmt_decimal(spatial["ARI global"], 3),
         "ARI bajo",
+        help=(
+            "Compara los perfiles empresariales con una regionalización que obliga "
+            "a unir municipios vecinos. Un valor bajo indica que responden a "
+            "preguntas territoriales distintas."
+        ),
     )
     st.markdown(
         """
@@ -702,6 +855,20 @@ def render_accessibility(
         """,
         unsafe_allow_html=True,
     )
+    with st.expander("Cómo se obtienen estos tres resultados"):
+        st.markdown(
+            """
+            - **Concentración espacial (I de Moran):** pregunta si municipios con
+              valores similares en una dimensión tienden a localizarse cerca.
+            - **Fronteras del mismo perfil:** compara cuántos pares de municipios
+              vecinos comparten perfil frente a lo esperado por azar.
+            - **Coincidencia con regiones continuas (ARI):** contrasta la tipología
+              empresarial con otra clasificación que obliga a formar bloques
+              geográficos conectados.
+
+            Ninguna de estas medidas prueba que la proximidad produzca el perfil.
+            """
+        )
 
 
 def render_municipality(data: pd.DataFrame) -> None:
@@ -741,7 +908,14 @@ def render_municipality(data: pd.DataFrame) -> None:
         "Unidades visibles",
         fmt_integer(row["n_unidades_economicas_urbanas"]),
     )
-    c2.metric("Población 2023", fmt_integer(row["poblacion_total_2023"]))
+    c2.metric(
+        "Población 2023",
+        fmt_integer(row["poblacion_total_2023"]),
+        help=(
+            "Se usa 2023 para mantener el mismo año de referencia económica del "
+            "subconjunto CENU y del valor agregado empleado en las comparaciones."
+        ),
+    )
     c3.metric(
         "Unidades por 1.000 hab.",
         fmt_decimal(row["ue_urbanas_visibles_por_1000_hab_total_2023"]),
@@ -752,8 +926,17 @@ def render_municipality(data: pd.DataFrame) -> None:
         f"{fmt_decimal(row['distancia_lineal_nucleo_urbano_top5_km'])} km",
     )
     c5.metric(
-        "VA por habitante",
+        "VA 2023 por habitante",
         f"${fmt_decimal(row['va_2023_por_habitante_millones_cop'], 2)} M",
+        help=(
+            "Valor agregado municipal 2023 dividido por la población proyectada "
+            "de 2023. Es contexto externo y no determina el perfil."
+        ),
+    )
+    st.caption(
+        "La ficha alinea población y valor agregado con 2023, año de referencia "
+        "económica de las variables CENU utilizadas. La recolección ocurrió entre "
+        "2024 y comienzos de 2025."
     )
 
     left, right = st.columns([1.05, 1], gap="large")
@@ -772,31 +955,78 @@ def render_municipality(data: pd.DataFrame) -> None:
             config=PLOT_CONFIG,
         )
 
-    st.markdown("#### Indicadores seleccionados")
-    rows = []
-    for label, column in INDICATOR_COLUMNS.items():
-        value = float(row[column])
-        reference = float(means[column])
-        rows.append(
-            {
-                "Indicador": label,
-                "Municipio (%)": value,
-                "Promedio del perfil (%)": reference,
-                "Diferencia (p.p.)": value - reference,
-            }
-        )
-    indicators = pd.DataFrame(rows)
-    st.dataframe(
-        indicators.style.format(
-            {
-                "Municipio (%)": "{:.1f}",
-                "Promedio del perfil (%)": "{:.1f}",
-                "Diferencia (p.p.)": "{:+.1f}",
-            }
-        ),
-        hide_index=True,
-        width="stretch",
+    st.markdown("#### Radiografía ampliada del tejido empresarial")
+    st.caption(
+        "Explore cada bloque por separado. Las variables adicionales enriquecen "
+        "la lectura municipal, pero no determinan el perfil asignado."
     )
+    department_means = data.select_dtypes(include="number").mean()
+    tabs = st.tabs(list(MUNICIPALITY_INDICATOR_GROUPS))
+    for tab, (group_name, indicators_group) in zip(
+        tabs, MUNICIPALITY_INDICATOR_GROUPS.items()
+    ):
+        with tab:
+            rows = []
+            for label, column in indicators_group.items():
+                value = float(row[column])
+                profile_reference = float(means[column])
+                department_reference = float(department_means[column])
+                rows.append(
+                    {
+                        "Indicador": label,
+                        "Municipio": value,
+                        "Perfil": profile_reference,
+                        "Boyacá": department_reference,
+                        "Brecha Boyacá": value - department_reference,
+                    }
+                )
+            indicators = pd.DataFrame(rows)
+            st.dataframe(
+                indicators.style.format(
+                    {
+                        "Municipio": "{:.1f}",
+                        "Perfil": "{:.1f}",
+                        "Boyacá": "{:.1f}",
+                        "Brecha Boyacá": "{:+.1f}",
+                    }
+                ),
+                hide_index=True,
+                width="stretch",
+            )
+
+    universe_rows = [
+        {
+            "Universo temático": label,
+            "Unidades observadas": int(round(row[column])),
+        }
+        for label, column in MUNICIPALITY_UNIVERSES.items()
+    ]
+    universe_table = pd.DataFrame(universe_rows)
+    small_universes = universe_table[
+        universe_table["Unidades observadas"] < 30
+    ]
+    if not small_universes.empty:
+        st.warning(
+            f"{len(small_universes)} bloque(s) de esta ficha tienen menos de "
+            "30 observaciones. Interprete sus porcentajes con especial cautela."
+        )
+        with st.expander("Ver alertas de cobertura"):
+            st.dataframe(
+                small_universes,
+                hide_index=True,
+                width="stretch",
+            )
+    else:
+        st.caption(
+            "Sin alertas por universos pequeños: todos los bloques temáticos de "
+            "esta ficha reúnen al menos 30 observaciones."
+        )
+    with st.expander("Nota sobre los denominadores"):
+        st.markdown(
+            "Los universos cambian entre módulos del CENU; por eso porcentajes de "
+            "filas distintas no siempre comparten el mismo denominador. IVA y "
+            "renta excluyen la categoría «sin información»."
+        )
 
     assignment_text = {
         "representativa": "cercana al centroide de su perfil",
@@ -853,9 +1083,12 @@ def render_methodology(data: pd.DataFrame) -> None:
            sirvieron como contraste.
         4. Las doce variables directas, la estabilidad y los universos pequeños
            evaluaron sensibilidad.
-        5. Población, valor agregado, actividad CIIU y distancia se analizaron
+        5. Gestión contable, activos, remuneración, IVA y renta se probaron en
+           una auditoría adicional; enriquecen la ficha, pero no reemplazan la
+           tipología porque sus mejoras estadísticas fueron parciales.
+        6. Población, valor agregado, actividad CIIU y distancia se analizaron
            después, sin formar los perfiles.
-        6. Moran, acuerdo vecinal y regionalización contigua examinaron la
+        7. Moran, acuerdo vecinal y regionalización contigua examinaron la
            organización espacial.
         """
     )
@@ -878,9 +1111,13 @@ def render_methodology(data: pd.DataFrame) -> None:
         st.markdown("### Referencia temporal")
         st.markdown(
             """
-            - **CENU:** operación 2024, referencia económica principal 2023.
-            - **Población:** proyecciones municipales 2023.
-            - **Valor agregado:** 2023 como contexto contemporáneo.
+            - **CENU:** recolección entre 2024 y comienzos de 2025; las variables
+              económicas territoriales utilizadas tienen referencia 2023.
+            - **Población:** proyección municipal 2023 para construir tasas
+              contemporáneas a esa referencia.
+            - **Valor agregado:** 2023 para la comparación principal. La serie
+              oficial ya ofrece 2024 provisional, que se reserva como contexto
+              posterior y no reemplaza silenciosamente la referencia del estudio.
             - **Geometría:** Marco Geoestadístico Nacional 2024.
             """
         )
@@ -888,6 +1125,46 @@ def render_methodology(data: pd.DataFrame) -> None:
             "El valor agregado municipal no es la suma directa de las unidades "
             "censadas y se mantiene fuera del clustering."
         )
+
+    st.markdown("### Glosario para interpretar el tablero")
+    glossary = pd.DataFrame(
+        [
+            (
+                "Perfil municipal",
+                "Grupo de municipios estadísticamente parecidos; no es un ranking.",
+            ),
+            (
+                "Puntaje estandarizado",
+                "Posición respecto al promedio de Boyacá; cero es el promedio.",
+            ),
+            (
+                "ρ de Spearman",
+                "Dirección e intensidad de una relación monotónica con la distancia.",
+            ),
+            (
+                "I de Moran",
+                "Grado en que valores municipales parecidos se agrupan espacialmente.",
+            ),
+            (
+                "ARI",
+                "Coincidencia entre dos clasificaciones, descontando el acuerdo por azar.",
+            ),
+            (
+                "Centralidad secundaria",
+                "Candidato lejano con densidad alta; requiere validación con flujos reales.",
+            ),
+        ],
+        columns=["Concepto", "Lectura sencilla"],
+    )
+    st.dataframe(
+        glossary,
+        hide_index=True,
+        width="stretch",
+        column_config={
+            "Concepto": st.column_config.TextColumn(width="small"),
+            "Lectura sencilla": st.column_config.TextColumn(width="large"),
+        },
+    )
 
     st.markdown("### Descargar la base pública del tablero")
     export = data.copy()
@@ -919,14 +1196,14 @@ with st.sidebar:
         [
             "Panorama territorial",
             "Perfiles municipales",
-            "Accesibilidad y espacio",
+            "Accesibilidad territorial",
             "Ficha municipal",
             "Método y alcance",
         ],
         label_visibility="collapsed",
     )
     st.divider()
-    if page in {"Panorama territorial", "Accesibilidad y espacio"}:
+    if page in {"Panorama territorial", "Accesibilidad territorial"}:
         st.markdown("#### Filtros territoriales")
         selected_profiles = st.pills(
             "Perfiles",
@@ -984,7 +1261,7 @@ if page == "Panorama territorial":
     render_overview(data, filtered, geojson)
 elif page == "Perfiles municipales":
     render_profiles(data)
-elif page == "Accesibilidad y espacio":
+elif page == "Accesibilidad territorial":
     render_accessibility(data, filtered, geojson)
 elif page == "Ficha municipal":
     render_municipality(data)
